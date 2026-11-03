@@ -649,7 +649,9 @@ def _create_message_from_message_type(
             # Convert OpenAI-format tool call to LangChain format.
             if "function" in tool_call:
                 args = tool_call["function"]["arguments"]
-                if isinstance(args, str):
+                if args is None or args == "":
+                    args = {}
+                elif isinstance(args, str):
                     args = json.loads(args, strict=False)
                 kwargs["tool_calls"].append(
                     {
