@@ -764,6 +764,35 @@ class FakeTokenCountingModel(FakeChatModel):
         return dummy_token_counter(messages)
 
 
+@pytest.mark.parametrize("arguments", ["", None, "{}"])
+def test_convert_to_messages_openai_tool_call_without_arguments(
+    arguments: str | None,
+) -> None:
+    messages = convert_to_messages(
+        [
+            {"role": "user", "content": "what time is it?"},
+            {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_1",
+                        "type": "function",
+                        "function": {"name": "get_time", "arguments": arguments},
+                    }
+                ],
+            },
+            {"role": "tool", "tool_call_id": "call_1", "content": "12:00"},
+        ]
+    )
+
+    assert messages[1] == AIMessage(
+        content="",
+        tool_calls=[{"name": "get_time", "args": {}, "id": "call_1"}],
+    )
+    assert messages[2] == ToolMessage(content="12:00", tool_call_id="call_1")
+
+
 def test_convert_to_messages() -> None:
     message_like: list[MessageLikeRepresentation] = [
         # BaseMessage
